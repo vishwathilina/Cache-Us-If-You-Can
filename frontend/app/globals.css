@@ -938,3 +938,24 @@ body {
     bottom: 16px;
   }
 }
+
+.chart-advice-box {
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1.5px solid var(--nb-navy-300);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--nb-navy-900);
+  background: rgba(255, 255, 255, 0.75);
+  resize: vertical;
+  min-height: 180px;
+  font-family: inherit;
+}
+
+.chart-advice-box:focus {
+  outline: none;
+  border-color: var(--nb-navy-600);
+  box-shadow: 0 0 0 3px rgba(47, 93, 140, 0.14);
+}

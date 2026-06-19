@@ -91,6 +91,22 @@ const NAV_ITEMS = [
     )
   },
   {
+    label: 'Chart Analysis',
+    path: '/chart-analysis',
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="nav-icon"
+      >
+        <path d="M3 3v18h18" />
+        <path d="M7 14v4M12 10v8M17 6v12" />
+      </svg>
+    )
+  },
+  {
     label: 'E-Statement',
     path: '/e-statement',
     icon: (
