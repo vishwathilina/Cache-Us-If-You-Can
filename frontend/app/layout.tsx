@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Bai_Jamjuree, Inter } from 'next/font/google'
 import { Auth0Provider } from '@auth0/nextjs-auth0/client'
+import ChatAssistant from '@/components/ChatAssistant'
 import './globals.css'
 
 const inter = Inter({
@@ -27,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${bai.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Auth0Provider>{children}</Auth0Provider>
+        <Auth0Provider>
+          {children}
+          <ChatAssistant />
+        </Auth0Provider>
       </body>
     </html>
   )
