@@ -28,7 +28,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        User user = userService.resolveUser(jwt);
+        User user = userService.upsertFromJwt(jwt);
         return ResponseEntity.ok(UserProfileDTO.from(user));
     }
 }

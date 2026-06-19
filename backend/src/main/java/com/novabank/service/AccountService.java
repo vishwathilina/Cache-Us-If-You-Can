@@ -19,9 +19,9 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final UserService userService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AccountResponseDTO> getAccountsForCurrentUser(Jwt jwt) {
-        User user = userService.resolveUser(jwt);
+        User user = userService.upsertFromJwt(jwt);
         return accountRepository.findByUser(user).stream()
             .map(AccountResponseDTO::from)
             .toList();
