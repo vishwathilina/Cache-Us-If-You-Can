@@ -1,6 +1,7 @@
 package com.novabank.controller;
 
 import com.novabank.dto.UserProfileDTO;
+import com.novabank.dto.UserSyncRequestDTO;
 import com.novabank.entity.User;
 import com.novabank.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,16 @@ public class UserController {
      * user profile into our database. Safe to call multiple times (upsert).
      */
     @PostMapping("/me")
-    public ResponseEntity<UserProfileDTO> syncProfile(@AuthenticationPrincipal Jwt jwt) {
-        User user = userService.upsertFromJwt(jwt);
+    public ResponseEntity<UserProfileDTO> syncProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody(required = false) UserSyncRequestDTO profile) {
+        User user = userService.upsertFromJwt(jwt, profile != null ? profile : new UserSyncRequestDTO());
         return ResponseEntity.ok(UserProfileDTO.from(user));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        User user = userService.upsertFromJwt(jwt);
+        User user = userService.resolveUser(jwt);
         return ResponseEntity.ok(UserProfileDTO.from(user));
     }
 }

@@ -2,6 +2,8 @@ package com.novabank.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,6 +40,7 @@ public class Transaction {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Builder.Default
     private TransactionStatus status = TransactionStatus.SUCCESS;
 

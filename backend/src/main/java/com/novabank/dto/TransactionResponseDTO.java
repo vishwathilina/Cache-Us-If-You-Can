@@ -17,6 +17,7 @@ public class TransactionResponseDTO {
     private String description;
     private String referenceNumber;
     private String status;
+    private String direction;
     private Instant createdAt;
 
     public static TransactionResponseDTO from(Transaction t) {
@@ -28,6 +29,21 @@ public class TransactionResponseDTO {
             .description(t.getDescription())
             .referenceNumber(t.getReferenceNumber())
             .status(t.getStatus().name())
+            .direction(null)
+            .createdAt(t.getCreatedAt())
+            .build();
+    }
+
+    public static TransactionResponseDTO from(Transaction t, String direction) {
+        return TransactionResponseDTO.builder()
+            .id(t.getId())
+            .fromAccountNumber(t.getFromAccount() != null ? t.getFromAccount().getAccountNumber() : null)
+            .toAccountNumber(t.getToAccount() != null ? t.getToAccount().getAccountNumber() : null)
+            .amount(t.getAmount())
+            .description(t.getDescription())
+            .referenceNumber(t.getReferenceNumber())
+            .status(t.getStatus().name())
+            .direction(direction)
             .createdAt(t.getCreatedAt())
             .build();
     }

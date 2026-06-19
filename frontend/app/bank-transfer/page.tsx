@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '@/components/sidebar'
 import { ToastProvider, useToast } from '@/components/Toast'
+import UiIcon from '@/components/UiIcon'
+import { palette } from '@/lib/palette'
 
 interface Account {
   id: number
@@ -19,6 +21,7 @@ interface TransferResult {
   fromAccountNumber: string
   toAccountNumber: string
   newBalance: number
+  timestamp: string
 }
 
 function BankTransferInner() {
@@ -33,7 +36,9 @@ function BankTransferInner() {
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const [step, setStep] = useState<'form' | 'confirm' | 'success' | 'failed'>('form')
+  const [step, setStep] = useState<'form' | 'confirm' | 'success' | 'failed'>(
+    'form'
+  )
   const [result, setResult] = useState<TransferResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -53,7 +58,8 @@ function BankTransferInner() {
   function validate() {
     const e: Record<string, string> = {}
     if (!fromAccountId) e.fromAccountId = 'Select a source account'
-    if (!toAccountNumber.trim()) e.toAccountNumber = 'Destination account number is required'
+    if (!toAccountNumber.trim())
+      e.toAccountNumber = 'Destination account number is required'
     if (!toAccountName.trim()) e.toAccountName = 'Account name is required'
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
       e.amount = 'Enter a valid positive amount'
@@ -78,24 +84,44 @@ function BankTransferInner() {
           fromAccountId: Number(fromAccountId),
           toAccountNumber,
           amount: Number(amount),
-          description: description || undefined,
-        }),
+          description: description || undefined
+        })
       })
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        const msg = err?.detail ?? err?.message ?? `Transfer failed (${res.status})`
-        showToast('error', res.status === 400 ? 'Insufficient Funds' : 'Transfer Failed', msg)
+        const msg =
+          err?.detail ?? err?.message ?? `Transfer failed (${res.status})`
+        showToast(
+          'error',
+          res.status === 400 ? 'Insufficient Funds' : 'Transfer Failed',
+          msg
+        )
         setStep('failed')
         return
       }
 
       const data: TransferResult = await res.json()
       setResult(data)
+      setAccounts((current) =>
+        current.map((account) =>
+          account.id === Number(fromAccountId)
+            ? { ...account, balance: data.newBalance }
+            : account
+        )
+      )
       setStep('success')
-      showToast('success', 'Transfer Successful!', `Reference: ${data.referenceNumber}`)
+      showToast(
+        'success',
+        'Transfer Successful!',
+        `Reference: ${data.referenceNumber}`
+      )
     } catch {
-      showToast('error', 'Network Error', 'Please check your connection and try again.')
+      showToast(
+        'error',
+        'Network Error',
+        'Please check your connection and try again.'
+      )
       setStep('failed')
     } finally {
       setSubmitting(false)
@@ -113,7 +139,10 @@ function BankTransferInner() {
   }
 
   const fmt = (n: number) =>
-    new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(n)
+    new Intl.NumberFormat('en-LK', {
+      style: 'currency',
+      currency: 'LKR'
+    }).format(n)
 
   return (
     <div className="app-shell">
@@ -131,34 +160,73 @@ function BankTransferInner() {
         <div className="page-body">
           {/* Step indicator */}
           {step === 'form' || step === 'confirm' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 24,
+                justifyContent: 'center'
+              }}
+            >
               {(['Details', 'Confirm', 'Complete'] as const).map((label, i) => {
                 const current = step === 'form' ? 0 : step === 'confirm' ? 1 : 2
                 return (
-                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    key={label}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                    >
                       <div
                         style={{
                           width: 28,
                           height: 28,
                           borderRadius: '50%',
-                          background: i <= current ? 'linear-gradient(135deg,#6b21a8,#7c3aed)' : '#e5e7eb',
-                          color: i <= current ? '#fff' : '#9ca3af',
+                          background:
+                            i <= current
+                              ? 'linear-gradient(135deg,#123A63,#2F5D8C)'
+                              : '#e5e7eb',
+                          color:
+                            i <= current
+                              ? palette.textOnBlue
+                              : 'rgba(201, 214, 229, 0.55)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: 12,
-                          fontWeight: 700,
+                          fontWeight: 700
                         }}
                       >
-                        {i < current ? '✓' : i + 1}
+                        {i < current ? (
+                          <UiIcon name="check" size={14} />
+                        ) : (
+                          i + 1
+                        )}
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: i <= current ? '#6b21a8' : '#9ca3af' }}>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color:
+                            i <= current
+                              ? palette.text
+                              : palette.textMuted
+                        }}
+                      >
                         {label}
                       </span>
                     </div>
                     {i < 2 && (
-                      <div style={{ width: 40, height: 2, background: i < current ? '#7c3aed' : '#e5e7eb', borderRadius: 1 }} />
+                      <div
+                        style={{
+                          width: 40,
+                          height: 2,
+                          background: i < current ? '#2F5D8C' : '#e5e7eb',
+                          borderRadius: 1
+                        }}
+                      />
                     )}
                   </div>
                 )
@@ -166,15 +234,28 @@ function BankTransferInner() {
             </div>
           ) : null}
 
-          <div className="card card-lg" style={{ maxWidth: 720, margin: '0 auto' }}>
+          <div
+            className="card card-lg"
+            style={{ maxWidth: 720, margin: '0 auto' }}
+          >
             {step === 'form' && (
               <form onSubmit={handleConfirm}>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2e', marginBottom: 24 }}>
+                <h3
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: palette.text,
+                    marginBottom: 24
+                  }}
+                >
                   Transfer Details
                 </h3>
 
                 {loading ? (
-                  <div className="skeleton" style={{ height: 52, borderRadius: 12, marginBottom: 16 }} />
+                  <div
+                    className="skeleton"
+                    style={{ height: 52, borderRadius: 12, marginBottom: 16 }}
+                  />
                 ) : (
                   <div style={{ marginBottom: 20 }}>
                     <label className="nb-label">From Account</label>
@@ -185,35 +266,58 @@ function BankTransferInner() {
                     >
                       {accounts.map((a) => (
                         <option key={a.id} value={a.id}>
-                          {a.accountName} — ••••{a.accountNumber.slice(-4)} ({fmt(a.balance)})
+                          {a.accountName} — ••••{a.accountNumber.slice(-4)} (
+                          {fmt(a.balance)})
                         </option>
                       ))}
                     </select>
-                    {errors.fromAccountId && <p className="error-msg">{errors.fromAccountId}</p>}
+                    {errors.fromAccountId && (
+                      <p className="error-msg">{errors.fromAccountId}</p>
+                    )}
                   </div>
                 )}
 
                 {selectedAccount && (
                   <div
                     style={{
-                      background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)',
-                      border: '1px solid rgba(124,58,237,0.15)',
+                      background: 'rgba(18, 58, 99, 0.10)',
+                      border: '1px solid rgba(47, 93, 140, 0.18)',
                       borderRadius: 14,
                       padding: '14px 18px',
                       marginBottom: 20,
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
+                      alignItems: 'center'
                     }}
                   >
-                    <span style={{ fontSize: 13, color: '#6b7280' }}>Available Balance</span>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: '#6b21a8' }}>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: palette.textMuted
+                      }}
+                    >
+                      Available Balance
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 800,
+                        color: palette.text
+                      }}
+                    >
                       {fmt(selectedAccount.balance)}
                     </span>
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 16,
+                    marginBottom: 20
+                  }}
+                >
                   <div>
                     <label className="nb-label">Destination Account No.</label>
                     <input
@@ -222,7 +326,9 @@ function BankTransferInner() {
                       value={toAccountNumber}
                       onChange={(e) => setToAccountNumber(e.target.value)}
                     />
-                    {errors.toAccountNumber && <p className="error-msg">{errors.toAccountNumber}</p>}
+                    {errors.toAccountNumber && (
+                      <p className="error-msg">{errors.toAccountNumber}</p>
+                    )}
                   </div>
                   <div>
                     <label className="nb-label">Account Holder Name</label>
@@ -232,7 +338,9 @@ function BankTransferInner() {
                       value={toAccountName}
                       onChange={(e) => setToAccountName(e.target.value)}
                     />
-                    {errors.toAccountName && <p className="error-msg">{errors.toAccountName}</p>}
+                    {errors.toAccountName && (
+                      <p className="error-msg">{errors.toAccountName}</p>
+                    )}
                   </div>
                 </div>
 
@@ -247,7 +355,9 @@ function BankTransferInner() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
-                  {errors.amount && <p className="error-msg">{errors.amount}</p>}
+                  {errors.amount && (
+                    <p className="error-msg">{errors.amount}</p>
+                  )}
                 </div>
 
                 <div style={{ marginBottom: 28 }}>
@@ -261,7 +371,11 @@ function BankTransferInner() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button type="submit" className="btn-primary" style={{ padding: '14px 40px' }}>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ padding: '14px 40px' }}
+                  >
                     Review Transfer →
                   </button>
                 </div>
@@ -270,24 +384,41 @@ function BankTransferInner() {
 
             {step === 'confirm' && (
               <div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2e', marginBottom: 24, textAlign: 'center' }}>
+                <h3
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: palette.text,
+                    marginBottom: 24,
+                    textAlign: 'center'
+                  }}
+                >
                   Confirm Transfer
                 </h3>
 
                 <div
                   style={{
-                    background: '#f9fafb',
+                    background: 'rgba(18, 58, 99, 0.12)',
                     borderRadius: 16,
                     padding: 24,
-                    marginBottom: 24,
+                    marginBottom: 24
                   }}
                 >
                   {[
-                    ['From', `${selectedAccount?.accountName} (••••${selectedAccount?.accountNumber.slice(-4)})`],
+                    [
+                      'From',
+                      `${selectedAccount?.accountName} (••••${selectedAccount?.accountNumber.slice(-4)})`
+                    ],
                     ['To Account', toAccountNumber],
                     ['Beneficiary', toAccountName],
-                    ['Amount', new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(Number(amount))],
-                    ['Description', description || '—'],
+                    [
+                      'Amount',
+                      new Intl.NumberFormat('en-LK', {
+                        style: 'currency',
+                        currency: 'LKR'
+                      }).format(Number(amount))
+                    ],
+                    ['Description', description || '—']
                   ].map(([label, value]) => (
                     <div
                       key={label}
@@ -295,12 +426,22 @@ function BankTransferInner() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         padding: '10px 0',
-                        borderBottom: '1px solid rgba(0,0,0,0.06)',
-                        fontSize: 14,
+                        borderBottom: '1px solid rgba(47, 93, 140, 0.35)',
+                        fontSize: 14
                       }}
                     >
-                      <span style={{ color: '#9ca3af', fontWeight: 600 }}>{label}</span>
-                      <span style={{ color: '#1a1a2e', fontWeight: 700, textAlign: 'right', maxWidth: '55%', wordBreak: 'break-all' }}>
+                      <span style={{ color: palette.textMuted, fontWeight: 600 }}>
+                        {label}
+                      </span>
+                      <span
+                        style={{
+                          color: palette.text,
+                          fontWeight: 700,
+                          textAlign: 'right',
+                          maxWidth: '55%',
+                          wordBreak: 'break-all'
+                        }}
+                      >
                         {value}
                       </span>
                     </div>
@@ -309,19 +450,29 @@ function BankTransferInner() {
 
                 <div
                   style={{
-                    background: 'linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.03))',
+                    background:
+                      'linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.03))',
                     border: '1px solid rgba(239,68,68,0.15)',
                     borderRadius: 12,
                     padding: '12px 16px',
                     fontSize: 13,
-                    color: '#b91c1c',
+                    color: '#F87171',
                     marginBottom: 24,
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center'
                   }}
                 >
-                  ⚠️ Transfers are irreversible. Please verify recipient details before confirming.
+                  <UiIcon name="warning" size={18} />
+                  <span>
+                    Transfers are irreversible. Please verify recipient details
+                    before confirming.
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <div
+                  style={{ display: 'flex', gap: 12, justifyContent: 'center' }}
+                >
                   <button
                     className="btn-secondary"
                     onClick={() => setStep('form')}
@@ -348,39 +499,84 @@ function BankTransferInner() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#dcfce7',
+                    background: 'rgba(74, 222, 128, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 24px',
-                    fontSize: 36,
+                    fontSize: 36
                   }}
                 >
-                  ✓
+                  <UiIcon name="check" size={38} />
                 </div>
-                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#15803d', marginBottom: 8 }}>
+                <h3
+                  style={{
+                    fontSize: 24,
+                    fontWeight: 800,
+                    color: '#4ADE80',
+                    marginBottom: 8
+                  }}
+                >
                   Transfer Successful!
                 </h3>
-                <p style={{ color: '#9ca3af', marginBottom: 24 }}>
+                <p style={{ color: palette.textMuted, marginBottom: 24 }}>
                   Your funds have been transferred securely.
                 </p>
 
-                <div style={{ background: '#f9fafb', borderRadius: 14, padding: 20, marginBottom: 24, textAlign: 'left' }}>
+                <div
+                  style={{
+                    background: 'rgba(18, 58, 99, 0.12)',
+                    borderRadius: 14,
+                    padding: 20,
+                    marginBottom: 24,
+                    textAlign: 'left'
+                  }}
+                >
                   {[
                     ['Reference', result.referenceNumber],
-                    ['Amount', new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(result.amount)],
+                    [
+                      'Amount',
+                      new Intl.NumberFormat('en-LK', {
+                        style: 'currency',
+                        currency: 'LKR'
+                      }).format(result.amount)
+                    ],
                     ['To', result.toAccountNumber],
-                    ['New Balance', new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(result.newBalance)],
+                    [
+                      'New Balance',
+                      new Intl.NumberFormat('en-LK', {
+                        style: 'currency',
+                        currency: 'LKR'
+                      }).format(result.newBalance)
+                    ],
+                    ['Date', new Date(result.timestamp).toLocaleString()]
                   ].map(([label, value]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <span style={{ color: '#9ca3af', fontWeight: 600 }}>{label}</span>
-                      <span style={{ color: '#1a1a2e', fontWeight: 700 }}>{value}</span>
+                    <div
+                      key={label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0',
+                        fontSize: 14,
+                        borderBottom: '1px solid rgba(47, 93, 140, 0.25)'
+                      }}
+                    >
+                      <span style={{ color: palette.textMuted, fontWeight: 600 }}>
+                        {label}
+                      </span>
+                      <span style={{ color: palette.text, fontWeight: 700 }}>
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                <button className="btn-primary" onClick={reset} style={{ padding: '14px 40px' }}>
-                  ← New Transfer
+                <button
+                  className="btn-primary"
+                  onClick={reset}
+                  style={{ padding: '14px 40px' }}
+                >
+                  New Transfer
                 </button>
               </div>
             )}
@@ -392,25 +588,32 @@ function BankTransferInner() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: '#fee2e2',
+                    background: 'rgba(248, 113, 113, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 24px',
                     fontSize: 36,
-                    color: '#ef4444',
+                    color: '#F87171'
                   }}
                 >
-                  ✕
+                  <UiIcon name="x" size={38} />
                 </div>
-                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#b91c1c', marginBottom: 8 }}>
+                <h3
+                  style={{
+                    fontSize: 24,
+                    fontWeight: 800,
+                    color: '#F87171',
+                    marginBottom: 8
+                  }}
+                >
                   Transfer Failed
                 </h3>
-                <p style={{ color: '#9ca3af', marginBottom: 24 }}>
+                <p style={{ color: palette.textMuted, marginBottom: 24 }}>
                   Please check the error notification and try again.
                 </p>
                 <button className="btn-secondary" onClick={reset}>
-                  ← Try Again
+                  Try Again
                 </button>
               </div>
             )}

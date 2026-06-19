@@ -21,17 +21,37 @@ public class AccountService {
 
     @Transactional
     public List<AccountResponseDTO> getAccountsForCurrentUser(Jwt jwt) {
-        User user = userService.upsertFromJwt(jwt);
+        User user = userService.resolveUser(jwt);
         return accountRepository.findByUser(user).stream()
             .map(AccountResponseDTO::from)
             .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AccountResponseDTO getAccountById(Long accountId, Jwt jwt) {
         User user = userService.resolveUser(jwt);
         Account account = accountRepository.findByIdAndUser(accountId, user)
             .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        return AccountResponseDTO.from(account);
+    }
+
+    @Transactional
+    public AccountResponseDTO getAccountByNumber(String accountNumber, Jwt jwt) {
+        if (accountNumber == null || !accountNumber.matches("^ACC-[1-9]{10}$")) {
+            throw new IllegalArgumentException("Account number must use format ACC-xxxxxxxxxx using digits 1-9 only");
+        }
+
+        User user = userService.resolveUser(jwt);
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+            .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+        if (account.getUser() == null) {
+            account.setUser(user);
+            account = accountRepository.save(account);
+        } else if (!account.getUser().getId().equals(user.getId())) {
+            throw new ResourceNotFoundException("Account not found");
+        }
+
         return AccountResponseDTO.from(account);
     }
 

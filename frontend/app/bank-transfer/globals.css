@@ -26,8 +26,8 @@ body {
 }
 
 :root{
-  --sidebar-purple: rgba(58,6,59,0.83); /* #3A063B at 83% */
-  --sidebar-accent: #b886b6;
+  --sidebar-blue: rgba(18, 58, 99, 0.92);
+  --sidebar-accent: #2F5D8C;
   --card-bg: #ffffff;
   --bg-light: #f3f2f2;
 }
@@ -35,8 +35,8 @@ body {
 .font-geist{font-family: var(--font-bai, 'Bai Jamjuree'), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
 
 .bg-bg-light{background-color:var(--bg-light)}
-.bg-sidebar-purple{background:var(--sidebar-purple);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.12)}
-.text-sidebar-purple{color:var(--sidebar-purple)}
+.bg-sidebar-blue{background:var(--sidebar-blue);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(15,47,61,0.12)}
+.text-sidebar-blue{color:var(--sidebar-blue)}
 
 .transfer-card{
   background: var(--card-bg);
@@ -74,7 +74,7 @@ body {
   padding:18px 48px;
   border-radius:28px;
   font-weight:700;
-  box-shadow: 0 8px 18px rgba(90,39,64,0.2);
+  box-shadow: 0 8px 18px rgba(11, 31, 59, 0.18);
   border:none;
 }
 

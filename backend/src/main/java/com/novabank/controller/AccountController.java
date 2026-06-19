@@ -26,6 +26,13 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccountsForCurrentUser(jwt));
     }
 
+    @GetMapping("/lookup")
+    public ResponseEntity<AccountResponseDTO> getAccountByNumber(
+            @RequestParam String accountNumber,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(accountService.getAccountByNumber(accountNumber, jwt));
+    }
+
     /**
      * IDOR protection: accountId is verified against the JWT sub.
      * If the account doesn't belong to this user, 404 is returned (not 403
