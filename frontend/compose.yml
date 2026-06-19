@@ -1,0 +1,87 @@
+# Nova Bank – Local Development Stack
+# Usage: docker compose up --build --watch
+#
+# For production use Neon PostgreSQL (set DATABASE_URL in env).
+# For local dev, the 'db' service below runs PostgreSQL and its port
+# is intentionally NOT exposed to 0.0.0.0 (bound to 127.0.0.1 only).
+
+services:
+  # ── Frontend (Next.js) ────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: novabank-frontend
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      NEXT_PUBLIC_API_URL: "http://backend:8080"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: package.json
+
+  # ── Backend (Spring Boot) ─────────────────────────────────
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: novabank-backend
+    env_file:
+      - .env.local
+    environment:
+      PORT: "8080"
+      # Use the internal db service when running in Docker
+      DATABASE_URL: "jdbc:postgresql://db:5432/${POSTGRES_DB}?user=${POSTGRES_USER}&password=${POSTGRES_PASSWORD}&sslmode=disable"
+      FRONTEND_URL: "http://localhost:3000"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Database (PostgreSQL 17) ──────────────────────────────
+  # Port 5432 is bound to 127.0.0.1 ONLY – never exposed to 0.0.0.0.
+  # In production replace with Neon PostgreSQL (set DATABASE_URL env var).
+  db:
+    image: postgres:17-alpine
+    container_name: novabank-db
+    env_file:
+      - .env.local
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
